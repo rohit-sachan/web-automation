@@ -5,66 +5,70 @@ import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.remote.RemoteWebElement
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.Select
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
 class NetMaidMainPage {
-    private var driver: FirefoxDriver
+    private var driver: ChromeDriver
     init {
-        System.setProperty("webdriver.gecko.driver", "geckodriver-v0.26.0-win64\\geckodriver.exe");
-        driver = FirefoxDriver()
+        System.setProperty("webdriver.gecko.driver", "chromedriver_win32\\chromedriver.exe");
+//        driver = FirefoxDriver()
+        driver = ChromeDriver()
     }
     fun openAndLogin(url: String, userID: String, password: String) {
         driver.get(url)
         Thread.sleep(1000)
 
-        val slb = driver.findElementById("SLB-Contenedor")
-        (slb as RemoteWebElement).findElementById("user_login").sendKeys(userID)
+//        val navBarForUser = driver.findElement(By.id(("navbarDropdown").click()
+//        driver.findElement(By.className("dropdown-item").click();
 
-        (slb as RemoteWebElement).findElementById("user_password").sendKeys(password)
+        driver.findElement(By.id(("user_login"))).sendKeys(userID)
 
-        (slb as RemoteWebElement).findElementByClassName("sso-login-button-button").click()
+        driver.findElement(By.id(("user_password_sessions"))).sendKeys(password)
+
+        driver.findElement(By.className("btn-success")).click()
 
         Thread.sleep(2000)
-        driver.findElementById("BoxAlertBtnOk").click()
         println("logged-in")
     }
 
     fun findHelper(baseUrl: String, profileFreshness: String, keyWords: List<String>, lastPage: Int): MutableList<MaidDetails> {
-        driver.navigate().to("https://www.netmaid.com.sg/searchmaid")
+        driver.navigate().to("https://www.netmaid.com.sg/search")
         println("switched to search ... ")
         Thread.sleep(1000)
-        Select(driver.findElementById("search_created")).selectByValue(profileFreshness)
+        Select(driver.findElement(By.id(("netmaid_search_created")))).selectByValue(profileFreshness)
 
-        driver.findElementById("search_nationality_PH").click()
-        driver.findElementById("search_nationality_ID").click()
-        driver.findElementById("search_mtype_TXF").click()
+//        driver.findElement(By.id(("netmaid_search_nationality_PH").click()
+        driver.findElement(By.id(("netmaid_search_nationality_ID"))).click()
+//        driver.findElement(By.id(("netmaid_search_nationality_LK").click()
+//        driver.findElement(By.id(("netmaid_search_nationality_MM").click()
+//        driver.findElement(By.id(("netmaid_search_nationality_IN").click()
+        driver.findElement(By.id(("netmaid_search_mtype_TXF"))).click()
 
-        driver.findElementByLinkText("Search Maid with above Criteria").click()
+        driver.findElement(By.className("btn-success")).click()
 
         val results = mutableListOf<MaidDetails>()
+        val js = driver as JavascriptExecutor
+        js.executeScript("window.scrollTo(0, document.body.scrollHeight)")
 
-        (1..lastPage).forEach {
-            val pagedResultUrl = "https://www.netmaid.com.sg/search/result?page=$it"
-            driver.navigate().to(pagedResultUrl)
+        val helpersOnPage = driver.findElements(By.className("maid_overview"))
+        helpersOnPage.forEach { helper ->
             Thread.sleep(1000)
-            val helpersOnPage = driver.findElements(By.className("maid_overview"))
-            helpersOnPage.forEach { helper ->
-                Thread.sleep(1000)
-                val helperAbsURL = getAbsURLForHelper(helper, baseUrl)
-                val helperExperience = helper.getAttribute("innerHTML").toString()
-                val match = keyWords.all {expKeyword ->
-                    helperExperience.contains(expKeyword, true)
-                }
-                if(match){
-                    val maidDetails = MaidDetails(helperAbsURL, helperExperience)
-                    val doc= Jsoup.connect(helperAbsURL).get()
-                    enrichMaidDetails(doc, maidDetails)
-                    results.add(maidDetails)
-                }
+            val helperAbsURL = getAbsURLForHelper(helper, baseUrl)
+            val helperExperience = helper.getAttribute("innerHTML").toString()
+            val match = keyWords.all {expKeyword ->
+                helperExperience.contains(expKeyword, true)
+            }
+            if(match){
+                val maidDetails = MaidDetails(helperAbsURL, helperExperience)
+                val doc= Jsoup.connect(helperAbsURL).get()
+                enrichMaidDetails(doc, maidDetails)
+                results.add(maidDetails)
             }
         }
         return results

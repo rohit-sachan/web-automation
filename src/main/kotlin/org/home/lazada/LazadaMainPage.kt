@@ -22,16 +22,16 @@ class LazadaMainPage {
 
     fun openAndLogin(url: String, userID: String, password: String) {
         driver.get(url)
-        driver.findElementById("anonLogin").click()
-        driver.findElementByClassName("mod-login-input-loginName")
+        driver.findElement(By.id("anonLogin")).click()
+        driver.findElement(By.className("mod-login-input-loginName"))
             .findElement(By.ByXPath("//input[@type='text']"))
             .sendKeys(userID)
 
-        driver.findElementByClassName("mod-login-input-password")
+        driver.findElement(By.className("mod-login-input-password"))
             .findElement(By.ByXPath("//input[@type='password']"))
             .sendKeys(password)
 
-        driver.findElementByClassName("next-btn-primary").click()
+        driver.findElement(By.className("next-btn-primary")).click()
 
     }
 
@@ -41,21 +41,21 @@ class LazadaMainPage {
     }
 
     fun clickOnCart() {
-        driver.findElementById("topActionCartNumber").click()
-        driver.findElementByClassName("checkout-shop-checkbox").click()
+        driver.findElement(By.id(("topActionCartNumber"))).click()
+        driver.findElement(By.className("checkout-shop-checkbox")).click()
         var clicked = false
         while (!clicked)
             try {
-                driver.findElementByClassName("automation-checkout-order-total-button-button").click()
+                driver.findElement(By.className("automation-checkout-order-total-button-button")).click()
                 clicked = true
             } catch (e: Exception) {
                 println("some exception trying again ... ")
             }
-        driver.findElementByClassName("got-it-btn").click()
+        driver.findElement(By.className("got-it-btn")).click()
     }
 
     fun findEarliestEnabled() {
-        lookForTimeSlot { driver.findElementByClassName("deliveryTimeRight").click() }
+        lookForTimeSlot { driver.findElement(By.className("deliveryTimeRight")).click() }
     }
 
     private fun lookForTimeSlot(selectYourSlot: () -> Unit) {
@@ -63,7 +63,7 @@ class LazadaMainPage {
         while (!foundSlot) {
             try {
                 selectYourSlot()
-                val firstAvailable = driver.findElementsByClassName("slot-item-timing-row")
+                val firstAvailable = driver.findElements(By.className("slot-item-timing-row"))
                     .firstOrNull() { !it.getAttribute("class").contains("disabled") }
 
                 firstAvailable?.let {
@@ -76,7 +76,7 @@ class LazadaMainPage {
                     println("${LocalDateTime.now()} Did not find any time slot...")
                     println("Sleeping for $sleepTimeMin ")
                     Thread.sleep(sleepTimeMin * 60 * 10)
-                    driver.findElementByClassName("rm-slots-page-modal-header-close").click()
+                    driver.findElement(By.className("rm-slots-page-modal-header-close")).click()
                     foundSlot = false
                     println("Sleeping for $sleepTimeMin ")
                     Thread.sleep(sleepTimeMin * 60 * 10)
